@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kadar Leads</title>
+<style>
+:root{--bg:#f3f4f6;--panel:#fff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;
+--close:#16a34a;--near:#d97706;--far:#2563eb;--pass:#9ca3af;--bad:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--panel:#181b22;--ink:#f3f4f6;--muted:#9ca3af;--line:#2a2f3a;--accent:#60a5fa;--close:#22c55e;--near:#f59e0b;--far:#60a5fa;--shadow:none}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 14px}
+.row{display:flex;gap:8px;align-items:center}
+h1{font-size:18px;margin:0;flex:0 0 auto}
+.sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.call{background:var(--close);border-color:var(--close);color:#fff}
+.pills{display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
+.pill{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 14px;font-weight:600;white-space:nowrap;cursor:pointer}
+.pill.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pill b{opacity:.6;margin-left:4px;font-weight:600}
+main{max-width:1100px;margin:0 auto;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.card{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--line);border-left:6px solid var(--tc);padding:12px 14px;cursor:pointer}
+.card.done{opacity:.55}
+.addr{font-weight:700;font-size:16px}
+.who{color:var(--muted);font-size:13px;margin-top:1px}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.nums div{background:var(--bg);border-radius:10px;padding:7px 8px;text-align:center}
+.nums small{display:block;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.nums span{font-weight:800;font-size:16px}
+.flag{display:inline-block;background:#fef3c7;color:#92400e;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600;margin-bottom:8px}
+@media (prefers-color-scheme:dark){.flag{background:#422006;color:#fcd34d}}
+.acts{display:flex;gap:8px;align-items:center}
+.acts select{flex:1;font-weight:600}
+.acts .btn{padding:8px 14px}
+.empty{text-align:center;color:var(--muted);padding:50px 0}
+#drawer{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:30}
+#drawer.on{display:block}
+#sheet{position:absolute;right:0;top:0;bottom:0;width:min(520px,100%);background:var(--panel);overflow:auto;padding:16px 16px 40px}
+#sheet h2{margin:0 0 2px;font-size:20px}
+.sec{margin-top:16px}
+.sec h3{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.f2 label{font-size:12px;color:var(--muted);display:block;margin-bottom:2px}
+.res{display:flex;justify-content:space-between;background:var(--bg);border-radius:10px;padding:9px 12px;margin-top:8px;font-weight:700}
+.good{color:var(--close)}.warn{color:var(--near)}.bad{color:var(--bad)}
+.note{background:var(--bg);border-radius:10px;padding:8px 10px;margin-top:6px;font-size:14px}
+.note small{color:var(--muted)}
+a{color:var(--accent)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:9px 16px;border-radius:999px;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+#toast.on{opacity:1}
+#menu{position:absolute;right:14px;top:52px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);display:none;padding:6px;z-index:20}
+#menu.on{display:block}
+#menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+#menu button:hover{background:var(--bg)}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>Kadar Leads</h1>
+    <input id="q" type="search" placeholder="Search name, address, phone" style="max-width:340px">
+    <div class="sp"></div>
+    <select id="me" style="width:auto" title="Who is calling"></select>
+    <button class="btn" id="mbtn">⋯</button>
+  </div>
+  <div class="pills" id="pills"></div>
+</header>
+<div id="menu">
+  <button id="bExp">Save backup (JSON)</button>
+  <button id="bCsv">Download spreadsheet (CSV)</button>
+  <button id="bImp">Load backup</button>
+</div>
+<input type="file" id="file" accept=".json" hidden>
+<main>
+  <div class="row" style="margin-bottom:12px;gap:8px">
+    <select id="fs" style="width:auto">
+      <option value="">All leads</option>
+      <option value="call">Still to call</option>
+      <option value="follow">Follow up today</option>
+      <option value="hot">Offer stage</option>
+    </select>
+    <span id="count" style="color:var(--muted);font-size:13px"></span>
+  </div>
+  <div class="grid" id="list"></div>
+</main>
+<div id="drawer"><div id="sheet"></div></div>
+<div id="toast"></div>
+
+<script>/* Kadar lead tracker: daily leads data.
+   "Update site" replaces ONLY this data. Keep every lead's id stable (it keys saved statuses and notes).
+   New leads get new ids. Never reuse or renumber an id. */
+const LEADS_UPDATED="2026-11-15";
+const RAW=[
+["b1-18",1,"Near","Greg Thomas","205-356-0437","gthomas60438@gmail.com","507 8th Ave, Midfield AL 35228","Jefferson Co.","SFH 2/1 1,100sf 1955",40000,90000,36000,7000,6000,"Zillow facts + neighbor list","[Was: Close, ARV $95K, max $35K] Off market. Tax value $47.9K, no Zestimate. Neighbor 503 8th Ave listed $99.9K. Landlord exit (rent ~$889-950). Need $40K ask to drop closer to max.","new"],
+["b3-19",3,"Close","Anna Hanselmann","402-540-3717","adh336@yahoo.com","1905 S 27th St, Lincoln NE 68502","Lancaster Co.","SFH 3/2 1,762sf 1910",40000,190000,68000,45000,40000,"Zestimate $185K, comps ~$202K","[Was: Close, ARV $210K, max $92K] Off market. Tax value $160.8K. VERIFY THE $40K ASK, far below Lincoln values (typo or hidden issue).","new"],
+["b4-15",4,"Near","Latonia Lester","601-715-4127","latonia.amos@yahoo.com","1120 Emmanuel Dr, Terry MS 39170","Hinds Co.","SFH 1,056sf 1976, 1ac",45000,105000,35000,18500,16000,"Zestimate $108K","CONFIRM NOT A MOBILE HOME. [Was: Close, ARV $120K, max $34K] Off market. Zestimate $108K. Beds/baths not listed. Ask was $40-50K (used $45K). Verify condition and lot.","new"],
+["b5-21",5,"Close","Noble Green","225-244-5111","noblegreen64@gmail.com","4908 Fairfield Ave, Baton Rouge LA 70802","East Baton Rouge Parish","SFH 2/1 900sf",32000,100000,40000,10000,9000,"Estimate (no Zestimate)","[Was: Close, ARV $130K, max $41K] Off market. Last sale about $33.5K (matches his story). Zillow shows Fairfields Ave. Low confidence on ARV, need comps.","new"],
+["b1-00",1,"Farther","Lenard Ray Wilson","985-355-9568","lenardrw22@gmail.com","1710 La Harper St, Amite LA 70422","Tangipahoa Parish","SFH (UNVERIFIED)",80000,120000,35000,29000,26000,"Unverified: address not on Zillow","[Was: Near, ARV $120K, max $33K] Address did not come up on Zillow. Numbers are screening estimates only. Small-town market (Amite).","new"],
+["b1-07",1,"Farther","Troy Brunk","513-256-2816","Smoothpuppy2172@gmail.com","2805 Saltair Maple Rd, Bethel OH 45106","Clermont Co.","SFH 3/2 1,478sf 1989, 1ac",130000,220000,49000,85000,75000,"Zestimate $227K, comps $230-280K","[Was: Near, ARV $165K, max $63.5K] Off market. Tax value $173K. Ask entered as $130.00, read as $130K. Rural (Bethel), buyer pool thinner.","new"],
+["b2-04",2,"Farther","Keith Barnhart","785-633-3002","fiercesome@yahoo.com","2025 NW Tyler St, Topeka KS 66608","Shawnee Co.","SFH 2/1 940sf 1920",101000,95000,31000,15500,14000,"Zestimate $98K","[Was: Near, ARV $115K, max $40K] Off market. Tenant damage (carpet, linoleum). Get lease and tenant situation.","new"],
+["b2-13",2,"Farther","Bobbijo Kleiner","785-289-1528","bjotap21@gmail.com","1327 NW Jackson St, Topeka KS 66608","Shawnee Co.","SFH 5/2 1,840sf 1920",80000,120000,61000,3000,3000,"Estimate, no Zestimate","[Was: Near, ARV $110K, max $32K] Off market. Needs 60-90 days to move. Big older house, repairs could be heavy.","new"],
+["b3-03",3,"Near","Blaine Murphy","409-656-8663","blaine0435@gmail.com","2440 Corley Ave, Beaumont TX 77701","Jefferson Co.","SFH 3/4 2,296sf 1962",49500,130000,60000,11000,10000,"Estimate (assessed ~$134K)","[Was: Near, ARV $80K, max $6K] Off market. Large house, Zillow shows 4 baths. Works only if repairs stay under about $45K. Condition unknown.","new"],
+["b3-12",3,"Farther","Michelle Cantin","812-230-2897","mcantin6924@gmail.com","6924 N Rebecca Ct, Terre Haute IN 47805","Vigo Co.","SFH 3/1 1,392sf 1962",80000,150000,46000,39000,34000,"Zestimate $141K, nearby $155-189K","[Was: Near, ARV $95K, max $26.5K] Off market. Tax value $99K. Comps are off-market sold nearby.","new"],
+["b4-03",4,"Farther","Mary Lynch-callahan","812-230-7176","giftmc1962@yahoo.com","2620 Harrison Ave, Terre Haute IN 47803","Vigo Co.","SFH 2/1 765sf 1948",78000,90000,25000,18000,16000,"Zestimate $95K, comps $62-139K","[Was: Near, ARV $90K, max $18K] Off market. Financial hardship. Small house, low-value market.","new"],
+["b4-10",4,"Close","Judy Crawford","785-580-6293","froggranny55@gmail.com","2501 SE Maryland Ave, Topeka KS 66605","Shawnee Co.","SFH 3/2 1,305sf 1988",50000,150000,43000,42000,37000,"Zestimate $154K","[Was: Near, ARV $90K, max $18K] Off market. Tax value $148K. Strong spread for Topeka if condition is average.","new"],
+["b4-14",4,"Farther","Frank Roberts","913-485-7520","jazandreny@gmail.com","8401 Riley St, Overland Park KS 66212","Johnson Co.","SFH 3/1 1,300sf 1955",190000,330000,64000,147000,129000,"Zestimate $327.7K","[Was: Near, ARV $260K, max $122K] Off market. Zestimate $328K but ask is $190K. VERIFY why (gut rehab, teardown, or typo).","new"],
+["b5-32",5,"Near","Mike Rita Vest","216-801-9134","rrobinson630@yahoo.com","12921 Matherson Ave, Cleveland OH 44135","Cuyahoga Co.","SFH 2/1 741sf 1929",80000,130000,29000,42000,37000,"Zestimate $139.7K, comps $130K","[Was: Near, ARV $100K, max $27K] Off market. Tax value $79.6K.","new"],
+["b1-09",1,"Farther","Cheryl Baker","602-662-4901","Beadingboomer@yahoo.com","1970 W Tanner Ranch Rd, San Tan Valley AZ 85144","Pinal Co.","SFH (UNVERIFIED)",250000,340000,45000,173000,152000,"Unverified: address not on Zillow","[Was: Farther, ARV $340K, max $173K] Address did not come up on Zillow. Old comp 2496 W Tanner Ranch sold $320K. Estimates only.","new"],
+["b1-03",1,"Farther","Liz Honaker","406-254-7172","honakerlaw@aol.com","439 W Davilla St, Bartlett TX 76511","Bell Co.","SFH (UNVERIFIED)",165000,185000,36000,73500,65000,"Unverified: address not on Zillow","[Was: Farther, ARV $185K, max $73.5K] Address did not come up on Zillow. Bartlett TX is a tiny town, thin buyer pool.","new"],
+["b1-11",1,"Farther","Jeff Cecil","337-915-9706","zeph257@gmail.com","202 Saint Charles St, Carencro LA 70520","Lafayette Parish","SFH (UNVERIFIED)",150000,170000,34000,65000,57000,"Unverified: address not on Zillow","[Was: Farther, ARV $170K, max $65K] Address did not come up on Zillow. Inherited. Confirm heirs and probate.","new"],
+["b1-19",1,"Farther","Melinda Fontenette","337-455-1269","fontenettemelinda@hotmail.com","314 Begnaud Dr, Lafayette LA 70501","Lafayette Parish","SFH 1,530sf 2010",170000,200000,37000,83000,73000,"Zestimate $203.6K","[Was: Farther, ARV $190K, max $75K] Off market. Beds/baths not listed.","new"],
+["b2-05",2,"Farther","Mark Michalski","940-704-3825","mstump62@aol.com","2642 Key West Dr, Katy TX 77493","Harris Co.","SFH 4/3 3,099sf 2012",null,335000,51000,163500,144000,"Zestimate $336.6K, comps $332-350K","[Was: Farther, ARV $320K, max $174K] Off market. No ask given. Get his number first.","new"],
+["b2-16",2,"Farther","Ana Howard","801-529-3083","anahowardd06@gmail.com","141 Saxony Terrace C, Delray Beach FL 33446","Palm Beach Co.","Condo 2/2 883sf 1976",95000,80000,24000,12000,11000,"Zestimate $78.5K, comps $72-108K","[Was: Farther, ARV $110K, max $42K] Off market. Condo: check HOA, assessments, rental limits, assignment rules.","new"],
+["b3-17",3,"Farther","Thomas Clegg","479-925-6369","tcarknight@yahoo.com","17 Cardinal Ct, Rogers AR 72756","Benton Co.","SFH 4/3 2,933sf 1994, 0.74ac",275000,410000,81000,186000,164000,"Zestimate $416K, comps $350-495K","[Was: Farther, ARV $320K, max $174K] Off market. Financial hardship. Get mortgage balance.","new"],
+["b4-07",4,"Farther","Sal Fernandes","210-853-9977","salferns@hotmail.com","7850 Hedrick Farm, San Antonio TX 78239","Bexar Co.","SFH 3/2 1,585sf 2003",null,180000,35000,71000,62000,"Zestimate $180.6K","[Was: Farther, ARV $230K, max $111K] Off market. No ask given.","new"],
+["b4-08",4,"Farther","Gloria Bernal","219-424-7157","gloriabernal1212@gmail.com","1626 Minnesota St, Hobart IN 46342","Lake Co.","SFH 5/1 2,240sf 1961",null,255000,74000,84500,74000,"Zestimate $261.6K, comps $307K","[Was: Farther, ARV $200K, max $90K] Off market. Ask unclear ('2065', maybe $206.5K). Behind on payments.","new"],
+["b4-09",4,"Farther","Darla Henson","317-385-8313","darlahenson@aol.com","1429 E 11th St, Indianapolis IN 46201","Marion Co.","SFH 3/? 2,094sf 1900",null,215000,81000,49500,44000,"Zestimate $210K, comps $275K","[Was: Farther, ARV $130K, max $41K] Off market. No ask. Financial hardship.","new"],
+["b4-16",4,"Farther","Barbara Moseley","864-554-3016","bam7204@yahoo.com","14264 Bryce Dr, Horizon City TX 79928","El Paso Co.","SFH 4/2 1,359sf 2003",198000,195000,18000,98500,87000,"Zestimate $194.6K","[Was: Farther, ARV $200K, max $105K] Off market. Roof and AC about 2 yrs old. Ask $198K near full value.","new"],
+["b5-31",5,"Farther","Mike Hornbeck","304-483-2413","mikefalconfan1967@gmail.com","506 Dickens Dr, Mineral Wells WV 26150","Wood Co.","SFH 3/2 1,540sf 1983",120000,172000,42000,58500,51000,"Zestimate $174.6K, comps $168-175K","[Was: Farther, ARV $130K, max $41K] Off market. Tax value $142.5K.","new"],
+["b5-39",5,"Farther","Faith Hope","561-849-5038","faithhopelove65@yahoo.com","2443 NW 8th St, Pompano Beach FL 33069","Broward Co.","SFH 2/1 803sf 1964",null,270000,35000,134000,118000,"Zestimate $233.7K, comps $285-301K","Off market. No ask. Zestimate low vs renovated comps; use $250-270K.","new"],
+["b6-01",6,"Close","John Truett","765-459-1332","","2111 S Pershing Dr, Muncie IN 47302","Delaware Co. IN","SFH 3/1 720sf",30000,70000,24000,5000,13000,"Zillow facts","ONLY WORKS AT A $10K FEE (max is $5K at $20K fee; $15K at $10K fee). Financial hardship. Thin spread.","new"],
+["b6-02",6,"Close","Byron Jones","269-830-7052","","555 Upton Ave, Springfield MI 49037","Calhoun Co. MI","SFH",35000,80000,25000,11000,18000,"Zillow facts","ONLY WORKS AT A $10K FEE (max $11K at $20K fee, $21K at $10K fee). VERIFY THE ASK, it came through garbled (about $35K). Mentions cars parked for years and bank liens. Small city, buyers may be thin.","new"],
+["b6-03",6,"Close","Erick Trahan","337-326-7846","","121 Lepinay Rd, Lafayette LA 70508","Lafayette Parish","SFH",50000,330000,63000,148000,45000,"Zestimate $334K","VERIFY THE ASK: $10-50K against a $334K Zestimate is almost certainly wrong or a trap. Check liens, tenants and title first.","new"],
+["b6-04",6,"Farther","Jaime Todt","513-410-1185","","10505 Hamilton Ave, Cincinnati OH 45231","Hamilton Co. OH","SFH",125000,135000,30000,44500,39000,"Zillow facts","Inherited. Cincinnati has a strong buyer pool.","new"],
+["b6-05",6,"Farther","Sherry Ifft-Yohman","330-808-9610","","5372 State Route 46, Cortland OH 44410","Trumbull Co. OH","SFH",100000,185000,83000,26500,23000,"Zillow facts","Damages. Get the real repair scope.","new"],
+["b6-06",6,"Farther","Pat Rogers","937-504-4592","","41 Walnut St, South Charleston OH 45368","Clark Co. OH","SFH",120000,115000,31000,29500,26000,"Zillow facts","Small village, dispo is thin.","new"],
+["b6-07",6,"Farther","Lenny Slavin","210-505-0327","","4503 Trailwood Dr, San Antonio TX 78228","Bexar Co.","SFH",150000,185000,42000,67500,59000,"Zillow facts","Tired landlord with tenant issues. Strong buyer pool.","new"],
+["b6-08",6,"Farther","John Lowrimore Jr","770-584-8837","","1402 Dauset Dr, Griffin GA 30224","Spalding Co.","SFH",140000,225000,71000,66500,59000,"Zillow facts","Inherited. Ask is $140K+.","new"],
+["b6-09",6,"Farther","Ricci Millaway","214-912-8331","","42319 Atmore Pl, Ponchatoula LA 70454","Tangipahoa Parish","SFH",225000,230000,15000,126000,111000,"Zillow facts","Gap is $99K, right at the cutoff. Seller says give me your best.","new"],
+["b7-01",7,"Farther","Lloyd Harriod","423-991-9476","","8 Kellys Ferry Ave, Chattanooga TN 37419","Hamilton Co. TN","SFH 3/1 1,280sf, 1ac",90000,145000,56000,25500,22000,"Zillow facts","Inherited. All original, no updates.","new"],
+["b7-02",7,"Farther","Ed Finegan","586-278-5917","","8045 Studebaker Ave, Warren MI 48089","Macomb Co. MI","SFH 3/2 1,321sf",80000,125000,44000,23500,21000,"Comps $107-125K","Warren has a strong buyer pool.","new"],
+["b7-03",7,"Farther","Richard Lanz","314-809-8966","","3570 Gary Rd, Arnold MO 63010","Jefferson Co. MO","SFH 756sf",125500,130000,40000,31000,27000,"Zillow facts","Zillow shows 0 baths, may need a bathroom. Wants time to relocate.","new"],
+["b7-04",7,"Farther","Robert Ray","512-417-1638","","1727 Juniper Ridge Loop, Cedar Park TX 78613","Williamson Co. TX","SFH 4/3 2,718sf",null,500000,60000,270000,null,"Zestimate $504.8K","No ask (says best offer). Get his number first, then start low.","new"],
+["b7-05",7,"Farther","Bill Gary","574-876-5314","","809 N 625 E, Westville IN 46391","La Porte Co. IN","SFH 3/2 1,152sf",null,170000,38000,61000,null,"Zillow facts","Tired landlord. No ask (says cash offer). Westville is small, buyers may be thin.","new"],
+["b7-06",7,"Farther","Tyrone Garrison","985-502-1995","","24266 Dawson Ct, Ponchatoula LA 70454","Tangipahoa Parish","SFH built 2021, 1ac",null,270000,23000,146000,null,"Zillow facts","Financial hardship. Says pay the balance. Find the mortgage balance.","new"],
+["b8-01",8,"Close","Richard Dyel","219-928-6134","dyel20300@gmail.com","702 Luke Dr, Westville IN 46391","La Porte Co. IN","SFH 3/2 1,240sf 2009",15000,270000,27000,142000,13000,"Zestimate $273.5K, comps $265-275K","VERIFY THE ASK: $15K on a $270K house looks like a typo. Financial hardship. Off market.","new"],
+["b8-02",8,"Farther","Kris Cox","304-629-0004","Kristophercox0@gmail.com","226 Carr Ave, Clarksburg WV 26301","Harrison Co. WV","SFH 3/3 2,558sf 1959",190000,285000,70000,109000,96000,"Zestimate $285K","Inherited. Off market. $81K over our max.","new"],
+["b8-03",8,"Farther","Bob Usey","228-861-9020","bob.usey228@gmail.com","2532 Greenview Dr, Gulfport MS 39507","Harrison Co. MS","SFH 3/3 2,747sf 1986",null,312000,75000,123000,108000,"Zestimate $312.6K","No ask given. Says over 80 (may owe about $80K). Get his number.","new"],
+["b8-04",8,"Farther","Hank Martin","423-943-2969","hankwmartin995@gmail.com","131 Wichita St, Johnson City TN 37601","Washington Co. TN","SFH 1,688sf 1925",null,150000,56000,29000,25000,"Zestimate $138.7K, comps $174K","No ask given. Max is thin, get his number first.","new"],
+["b8-05",8,"Farther","Alexand Papa","229-269-0952","alexpapa39@gmail.com","298 Averitt Pl, Crestview FL 32539","Okaloosa Co.","SFH 3/2 1,269sf 1968, 4ac",215000,262000,35000,128000,113000,"Zestimate $256.7K, comps $275K","He says $215K firm. $87K over our max.","new"]
+];
+</script>
+<script>
+const LEADS=RAW.map(r=>({id:r[0],batch:r[1],tier:r[2],name:r[3],phone:r[4],email:r[5],address:r[6],county:r[7],type:r[8],ask:r[9],arv:r[10],repairs:r[11],mc:r[12],offer:r[13],basis:r[14],notes:r[15],st:r[16]||"new"}));
+const STATUSES=[["new","Not called"],["noans","No answer"],["vm","Voicemail"],["cb","Callback"],["info","Got info"],["offer","Offer made"],["counter","Counter"],["accepted","Accepted"],["sent","Contract sent"],["signed","Signed"],["assigned","Assigned"],["dead","Dead"],["mls","On MLS"]];
+const SN=Object.fromEntries(STATUSES);
+const CALL_STAGE=["new","noans","vm"],HOT=["offer","counter","accepted","sent","signed","assigned"],DONE=["dead","mls","assigned"];
+const TIER_ORDER={Close:0,Near:1,Farther:2,Pass:3};
+const TCOL={Close:"var(--close)",Near:"var(--near)",Farther:"var(--far)",Pass:"var(--pass)"};
+const KEY="kadar-lead-tracker-v1";
+let S=load();
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.leads){j.team=j.team||["Hamza","Partner","Acquisitions Mgr"];j.me=j.me||j.team[0];j.fee=j.fee||20000;j.pct=j.pct||70;return j}}catch(e){}
+  return {team:["Hamza","Partner","Acquisitions Mgr"],me:"Hamza",fee:20000,pct:70,theme:"",leads:{}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("Could not save in this browser")}}
+function L(id){if(!S.leads[id])S.leads[id]={status:(LEADS.find(x=>x.id===id)||{}).st||"new",calls:0,owner:"",follow:"",notes:[],checks:{},arvOk:false,mlsOk:false,upd:0};return S.leads[id]}
+function eff(l){const s=L(l.id);const g=k=>(k in s)?s[k]:l[k];
+  const ask=g("ask"),arv=g("arv"),repairs=g("repairs"),offer=g("offer");
+  const tier=(s.tier==="Parked"?"Farther":s.tier)||l.tier;
+  const bm=("arv" in s||"repairs" in s)?Math.round(arv*S.pct/100-repairs):l.mc+20000;
+  const mc=bm-S.fee;
+  return {ask,arv,repairs,offer,tier,bm,mc,gap:ask==null?null:ask-mc,feeOffer:offer==null?null:bm-offer}}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>n==null||isNaN(n)?"—":(n<0?"-":"")+"$"+Math.abs(Math.round(n)).toLocaleString("en-US");
+const short=n=>n==null||isNaN(n)?"—":(n<0?"-":"")+"$"+(Math.abs(n)>=1000?(Math.round(Math.abs(n)/100)/10)+"K":Math.abs(n));
+const today=()=>new Date().toISOString().slice(0,10);
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1700)}
+function tel(p){return "tel:+1"+String(p).replace(/\D/g,"")}
+function flagOf(n){const m=(n||"").match(/^(ONLY WORKS[^.]*\.|CONFIRM[^.]*\.|VERIFY[^.]*\.)/);return m?m[1].replace(/\.$/,"").toLowerCase().replace(/^./,c=>c.toUpperCase()).replace(/\$(\d+)k/gi,"$$$1K"):""}
+
+let fTier="active",fStat="",fq="";
+function visible(l){const s=L(l.id),e=eff(l);
+  if(e.tier==="Pass")return false;if(fTier!=="active"&&e.tier!==fTier)return false;
+  if(fStat==="call"&&!CALL_STAGE.includes(s.status))return false;
+  if(fStat==="follow"&&!(s.follow&&s.follow<=today()))return false;
+  if(fStat==="hot"&&!HOT.includes(s.status))return false;
+  if(fq){const h=(l.name+" "+l.address+" "+l.phone+" "+l.county).toLowerCase();if(!h.includes(fq.toLowerCase())&&!l.phone.replace(/\D/g,"").includes(fq.replace(/\D/g,"")||"~"))return false}
+  return true}
+function render(){
+  const all=LEADS.map(l=>[l,eff(l)]);
+  const c=t=>all.filter(x=>x[1].tier===t).length;
+  const defs=[["active","All",all.length-c("Pass")],["Close","Close",c("Close")],["Near","Near",c("Near")],["Farther","Farther",c("Farther")]];
+  $("#pills").innerHTML=defs.map(d=>`<button class="pill ${fTier===d[0]?"on":""}" data-t="${d[0]}">${d[1]}<b>${d[2]}</b></button>`).join("");
+  $("#pills").querySelectorAll(".pill").forEach(b=>b.onclick=()=>{fTier=b.dataset.t;render()});
+  const rows=all.filter(x=>visible(x[0])).sort((a,b)=>{
+    const da=DONE.includes(L(a[0].id).status)?1:0,db=DONE.includes(L(b[0].id).status)?1:0;
+    return da-db||TIER_ORDER[a[1].tier]-TIER_ORDER[b[1].tier]||(a[1].gap??1e9)-(b[1].gap??1e9)});
+  $("#count").textContent=rows.length+" leads";
+  $("#list").innerHTML=rows.length?rows.map(([l,e])=>card(l,e)).join(""):`<div class="empty">Nothing here</div>`;
+  $("#list").querySelectorAll(".card").forEach(el=>el.onclick=ev=>{if(ev.target.closest("a,select,button"))return;openLead(el.dataset.id)});
+  $("#list").querySelectorAll("select[data-id]").forEach(sel=>sel.onchange=()=>setStatus(sel.dataset.id,sel.value));
+}
+function card(l,e){const s=L(l.id),fl=flagOf(l.notes);
+  return `<div class="card ${DONE.includes(s.status)?"done":""}" data-id="${l.id}" style="--tc:${TCOL[e.tier]}">
+  ${fl?`<div class="flag">⚠ ${esc(fl)}</div>`:""}
+  <div class="addr">${esc(l.address)}</div>
+  <div class="who">${esc(l.name)} · ${esc(l.county)}</div>
+  <div class="nums"><div><small>Ask</small><span>${short(e.ask)}</span></div><div><small>Offer</small><span>${short(e.offer)}</span></div><div><small>Max</small><span>${short(e.mc)}</span></div></div>
+  <div class="acts"><a class="btn call" href="${tel(l.phone)}">Call</a><select data-id="${l.id}">${STATUSES.map(x=>`<option value="${x[0]}" ${s.status===x[0]?"selected":""}>${x[1]}</option>`).join("")}</select></div></div>`}
+function setStatus(id,val){const s=L(id);if(s.status===val)return;
+  s.notes.push({by:S.me,text:"Status: "+SN[s.status]+" → "+SN[val],ts:Date.now(),auto:true});s.status=val;s.upd=Date.now();save();render();toast("Saved")}
+
+function openLead(id){const l=LEADS.find(x=>x.id===id),s=L(id),e=eff(l);
+  const inp=(k,lab,v)=>`<div><label>${lab}</label><input type="number" inputmode="numeric" data-k="${k}" value="${v??""}"></div>`;
+  $("#sheet").innerHTML=`
+  <div class="row"><div><h2>${esc(l.address)}</h2><div class="who">${esc(l.name)} · ${esc(l.county)} · ${esc(l.type)}</div></div><div class="sp"></div><button class="btn" id="x">Close</button></div>
+  <div class="row sec"><a class="btn call" style="flex:1;text-align:center;text-decoration:none" href="${tel(l.phone)}">Call ${esc(l.phone)}</a>
+    <a class="btn" style="text-decoration:none" href="sms:+1${l.phone.replace(/\D/g,"")}">Text</a></div>
+  <div class="sec" style="font-size:14px">${l.email?`<a href="mailto:${esc(l.email)}">${esc(l.email)}</a> · `:""}<a target="_blank" rel="noopener" href="https://www.zillow.com/homes/${encodeURIComponent(l.address.replace(/[,]/g,"").replace(/\s+/g,"-"))}_rb/">Zillow</a></div>
+  ${flagOf(l.notes)?`<div class="sec"><div class="flag">⚠ ${esc(flagOf(l.notes))}</div></div>`:""}
+  <div class="sec"><h3>Numbers</h3><div class="f2">${inp("ask","Ask",e.ask)}${inp("offer","Our offer",e.offer)}${inp("arv","ARV (fixed-up value)",e.arv)}${inp("repairs","Repairs",e.repairs)}</div>
+    <div class="res"><span>Max we can pay</span><span id="rMax" class="${e.mc>=0?"good":"bad"}">${money(e.mc)}</span></div>
+    <div class="res"><span>Our fee at this offer</span><span id="rFee">${money(e.feeOffer)}</span></div>
+    <div class="res"><span>Over max by</span><span id="rGap">${e.gap==null?"—":money(e.gap)}</span></div>
+    <div class="who" style="margin-top:6px">${esc(l.basis)}</div></div>
+  <div class="sec"><h3>Status</h3><div class="f2"><select id="st">${STATUSES.map(x=>`<option value="${x[0]}" ${s.status===x[0]?"selected":""}>${x[1]}</option>`).join("")}</select>
+    <select id="tier">${["Close","Near","Farther"].map(t=>`<option ${e.tier===t?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div class="f2" style="margin-top:8px"><div><label>Follow up on</label><input type="date" id="fu" value="${esc(s.follow)}"></div>
+    <div><label>Calls made: ${s.calls||0}</label><button class="btn" id="logc" style="width:100%">+ Log a call</button></div></div></div>
+  <div class="sec"><h3>Notes</h3>${l.notes?`<div class="note">${esc(l.notes)}</div>`:""}
+    ${(s.notes||[]).filter(n=>!n.auto).map(n=>`<div class="note"><small>${esc(n.by)} · ${new Date(n.ts).toLocaleDateString()}</small><br>${esc(n.text)}</div>`).join("")}
+    <textarea id="nt" rows="2" placeholder="Add a note" style="margin-top:8px"></textarea><button class="btn pri" id="addn" style="margin-top:6px">Add note</button></div>`;
+  $("#drawer").classList.add("on");
+  const close=()=>{$("#drawer").classList.remove("on");render()};
+  $("#x").onclick=close;
+  $("#sheet").querySelectorAll("input[data-k]").forEach(i=>i.oninput=()=>{const k=i.dataset.k;s[k]=i.value===""?null:Number(i.value);s.upd=Date.now();save();
+    const f=eff(l);$("#rMax").textContent=money(f.mc);$("#rMax").className=f.mc>=0?"good":"bad";$("#rFee").textContent=money(f.feeOffer);$("#rGap").textContent=f.gap==null?"—":money(f.gap)});
+  $("#st").onchange=ev=>{setStatus(id,ev.target.value)};
+  $("#tier").onchange=ev=>{s.tier=ev.target.value;save();toast("Saved")};
+  $("#fu").onchange=ev=>{s.follow=ev.target.value;save()};
+  $("#logc").onclick=()=>{s.calls=(s.calls||0)+1;s.upd=Date.now();if(s.status==="new")s.status="noans";save();openLead(id)};
+  $("#addn").onclick=()=>{const t=$("#nt").value.trim();if(!t)return;s.notes.push({by:S.me,text:t,ts:Date.now()});s.upd=Date.now();save();openLead(id)};
+}
+$("#drawer").onclick=ev=>{if(ev.target.id==="drawer"){$("#drawer").classList.remove("on");render()}};
+$("#q").oninput=ev=>{fq=ev.target.value.trim();render()};
+$("#fs").onchange=ev=>{fStat=ev.target.value;render()};
+function fillMe(){$("#me").innerHTML=S.team.map(t=>`<option ${t===S.me?"selected":""}>${esc(t)}</option>`).join("")}
+$("#me").onchange=ev=>{S.me=ev.target.value;save()};
+$("#mbtn").onclick=ev=>{ev.stopPropagation();$("#menu").classList.toggle("on")};
+document.addEventListener("click",()=>$("#menu").classList.remove("on"));
+function dl(name,blob){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click()}
+$("#bExp").onclick=()=>dl("kadar-leads-"+today()+".json",new Blob([JSON.stringify(S)],{type:"application/json"}));
+$("#bImp").onclick=()=>$("#file").click();
+$("#file").onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.leads)throw 0;S=j;save();fillMe();render();toast("Backup loaded")}catch(e){toast("Not a valid backup")}};r.readAsText(f)};
+$("#bCsv").onclick=()=>{const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const rows=LEADS.map(l=>{const s=L(l.id),e=eff(l);return [e.tier,l.name,l.phone,l.email,l.address,l.county,SN[s.status],s.calls||0,s.follow,e.ask,e.arv,e.repairs,e.mc,e.offer,l.notes].map(q).join(",")});
+  dl("kadar-leads-"+today()+".csv",new Blob([["Tier,Name,Phone,Email,Address,County,Status,Calls,Follow-up,Ask,ARV,Repairs,Max,Offer,Notes"].concat(rows).join("\n")],{type:"text/csv"}))};
+fillMe();render();
+</script>
+</body>
+</html>
