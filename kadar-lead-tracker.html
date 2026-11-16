@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kadar Lead Tracker</title>
+<style>
+:root{
+  --bg:#f4f5f7;--panel:#fff;--ink:#14181f;--muted:#6a7280;--line:#e3e6ec;--accent:#1f6feb;--accent-ink:#fff;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.06);
+  --good:#16a34a;--warn:#d97706;--bad:#dc2626;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0e1116;--panel:#171b23;--ink:#eceff4;--muted:#99a1b0;--line:#272d38;--accent:#4c8dff;--shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3)}
+}
+:root[data-theme="dark"]{--bg:#0e1116;--panel:#171b23;--ink:#eceff4;--muted:#99a1b0;--line:#272d38;--accent:#4c8dff;--shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+header.top{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header.top h1{font-size:18px;margin:0;letter-spacing:-.01em}
+header.top .sub{color:var(--muted);font-size:12px}
+.sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);padding:7px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.sm{padding:4px 9px;font-size:12px}
+input[type=text],input[type=number],input[type=date],input[type=search],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+main{max-width:1500px;margin:0 auto;padding:18px 20px 60px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:22px;letter-spacing:-.02em}
+.stat span{color:var(--muted);font-size:12px}
+.progress{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px}
+.progress i{display:block;height:100%;background:var(--good)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar .grow{flex:1;min-width:200px}
+.bar select{width:auto}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:4px 11px;font-size:12px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .n{opacity:.6;margin-left:4px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:7px 12px;cursor:pointer;font-weight:600;font-size:13px}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--sc,#999);border-radius:12px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.card h3{margin:0;font-size:16px;letter-spacing:-.01em}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.addr{color:var(--muted);font-size:13px}
+.addr a{color:inherit}
+.tag{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.02em}
+.t-Close{background:#dcfce7;color:#166534}.t-Near{background:#dbeafe;color:#1e40af}.t-Parked{background:#fef3c7;color:#92400e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .t-Close{background:#14532d;color:#bbf7d0}:root:not([data-theme="light"]) .t-Near{background:#1e3a8a;color:#bfdbfe}:root:not([data-theme="light"]) .t-Parked{background:#78350f;color:#fde68a}}
+:root[data-theme="dark"] .t-Close{background:#14532d;color:#bbf7d0}:root[data-theme="dark"] .t-Near{background:#1e3a8a;color:#bfdbfe}:root[data-theme="dark"] .t-Parked{background:#78350f;color:#fde68a}
+.basis{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;border:1px solid var(--line);color:var(--muted)}
+.basis.ok{color:var(--good);border-color:var(--good)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.m{background:var(--bg);border-radius:8px;padding:7px 9px}
+.m small{display:block;color:var(--muted);font-size:11px}
+.m b{font-size:14px}
+.fee-good{color:var(--good)}.fee-warn{color:var(--warn)}.fee-bad{color:var(--bad)}
+.sel-status{font-weight:700;border-color:var(--sc);width:auto;max-width:100%}
+.meta{color:var(--muted);font-size:12px}
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.col{min-width:270px;max-width:270px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:var(--shadow)}
+.col h4{margin:0 0 8px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.col h4 i{width:10px;height:10px;border-radius:50%;background:var(--sc);display:inline-block;margin-right:6px}
+.mini{background:var(--bg);border:1px solid var(--line);border-left:4px solid var(--sc);border-radius:8px;padding:8px 9px;margin-bottom:8px;cursor:pointer}
+.mini b{display:block;font-size:13px}.mini span{color:var(--muted);font-size:12px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;justify-content:flex-end;z-index:50}
+.overlay.on{display:flex}
+.drawer{width:min(620px,100%);height:100%;background:var(--panel);overflow:auto;padding:20px;box-shadow:-10px 0 30px rgba(0,0,0,.25)}
+.drawer h2{margin:0 0 2px;font-size:20px}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.f label{display:block;color:var(--muted);font-size:12px;font-weight:600;margin-bottom:3px}
+.f .full{grid-column:1/-1}
+.sec{border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+.sec h5{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.checks label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.checks input{width:auto}
+.log{max-height:230px;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.log div{background:var(--bg);border-radius:8px;padding:7px 10px;font-size:13px}
+.log small{color:var(--muted);display:block}
+.note{background:var(--bg);border-left:3px solid var(--warn);padding:8px 10px;border-radius:6px;font-size:13px}
+.calc{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px}
+.calc div{display:flex;justify-content:space-between;padding:2px 0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:99}
+.toast.on{opacity:1}
+.empty{text-align:center;color:var(--muted);padding:50px 10px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px;color:var(--muted);font-size:12px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+@media (max-width:640px){main{padding:12px}.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.f{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>Kadar Holdings: Lead Tracker</h1>
+    <div class="sub">Close, Near and Parked leads. Changes save in this browser.</div>
+  </div>
+  <div class="sp"></div>
+  <label class="meta">You are
+    <select id="me" style="width:auto;display:inline-block"></select>
+  </label>
+  <label class="meta">Fee target
+    <input id="feeTarget" type="number" step="1000" style="width:100px;display:inline-block">
+  </label>
+  <label class="meta">Buyer %
+    <input id="buyerPct" type="number" min="50" max="85" style="width:64px;display:inline-block">
+  </label>
+  <button class="btn" id="btnTheme" title="Toggle theme">Theme</button>
+  <button class="btn" id="btnTeam">Team names</button>
+  <button class="btn" id="btnExport">Export</button>
+  <button class="btn" id="btnImport">Import</button>
+  <button class="btn" id="btnCsv">CSV</button>
+  <input id="file" type="file" accept="application/json" hidden>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="bar">
+    <input class="grow" id="q" type="search" placeholder="Search name, address, phone, county, notes">
+    <select id="fTier"><option value="">All tiers</option><option>Close</option><option>Near</option><option>Parked</option></select>
+    <select id="fOwner"></select>
+    <select id="sort">
+      <option value="tier">Sort: tier, then smallest gap</option>
+      <option value="fee">Sort: biggest fee at our offer</option>
+      <option value="ask">Sort: lowest ask</option>
+      <option value="recent">Sort: recently updated</option>
+      <option value="followup">Sort: follow-up date</option>
+      <option value="name">Sort: name</option>
+    </select>
+    <div class="seg"><button id="vCards" class="on">Cards</button><button id="vBoard">Pipeline</button></div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="legend" id="legend"></div>
+  <div id="view"></div>
+</main>
+
+<div class="overlay" id="ov"><div class="drawer" id="drawer"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- DATA ----------
+   Each lead: id, batch, tier, name, phone, email, address, county, type, ask, arv, repairs, mc (max contract at a $20K fee), offer (suggested initial), basis, notes
+   ARV and repairs are screening estimates unless basis says "Comps". Edit them in the lead panel after pulling sold comps. */
+const RAW=[
+["b1-18",1,"Close","Greg Thomas","205-356-0437","gthomas60438@gmail.com","507 8th Ave, Midfield AL 35228","Jefferson Co.","SFH",40000,95000,30000,35000,30000,"Comps","Landlord exit (rent about $889-950). Neighbor 503 8th Ave listed $99.9K. Cheap entry-level, easy buyer pool."],
+["b1-06",1,"Close","Anthony Shon","269-245-6714","aaashon69@gmail.com","4684 Opark St, Kalamazoo MI 49009","Kalamazoo Co.","SFH",85000,250000,45000,110000,75000,"Comps","Neighbor 4737 Opark St sold $283K. Ask is already under our max, so find out why: Oshtemo township, large lot, septic/well, size and condition unknown."],
+["b3-19",3,"Close","Anna Hanselmann","402-540-3717","adh336@yahoo.com","1905 S 27th St, Lincoln NE 68502","Lancaster Co.","SFH",40000,210000,35000,92000,80000,"Estimate","VERIFY THE ASK FIRST. $40K is far below Lincoln values, so it may be a typo or $400K. Relocating."],
+["b4-15",4,"Close","Latonia Lester","601-715-4127","latonia.amos@yahoo.com","1120 Emmanuel Dr, Terry MS 39170","Hinds Co.","SFH",45000,120000,30000,34000,30000,"Estimate","Ask was $40-50K (used $45K). Priced 10% under Zillow. Verify condition and lot."],
+["b4-18",4,"Close","Jarvis Williams","786-562-1890","jarviswilliams01@yahoo.com","1749 Todd St, Fayetteville NC 28306","Cumberland Co.","SFH",70000,150000,30000,55000,48000,"Estimate","No stated motivation."],
+["b5-21",5,"Close","Noble Green","225-244-5111","noblegreen64@gmail.com","4908 Fairfield Ave, Baton Rouge LA 70802","East Baton Rouge Parish","SFH",32000,130000,30000,41000,36000,"Estimate","Paid $32K six years ago and says he won't take less. A stale listing page for this address showed up in search, so check for an active listing."],
+["b1-00",1,"Near","Lenard Ray Wilson","985-355-9568","lenardrw22@gmail.com","1710 La Harper St, Amite LA 70422","Tangipahoa Parish","SFH",80000,120000,31000,33000,28000,"Partial comps","Max is only $13K at a $40K fee. Small-town market."],
+["b1-07",1,"Near","Troy Brunk","513-256-2816","Smoothpuppy2172@gmail.com","2805 Saltair Maple Rd, Bethel OH 45106","Clermont Co.","SFH",130000,165000,32000,63500,55000,"Comps","Ask was entered as $130.00, read as $130K. Priced 10% under Zillow. Rural (Tate Twp): confirm acreage."],
+["b2-04",2,"Near","Keith Barnhart","785-633-3002","fiercesome@yahoo.com","2025 NW Tyler St, Topeka KS 66608","Shawnee Co.","SFH (tenant)",101000,115000,20000,40000,35000,"Estimate","Tenant tore up the living room carpet and the dog damaged the linoleum. Get lease and rent details."],
+["b2-13",2,"Near","Bobbijo Kleiner","785-289-1528","bjotap21@gmail.com","1327 NW Jackson St, Topeka KS 66608","Shawnee Co.","SFH",80000,110000,25000,32000,28000,"Estimate","Wants to sell ASAP but needs 60-90 days to move. Offer a flexible close date."],
+["b3-00",3,"Near","Corey Hall","314-707-7665","corryhall2744@gmail.com","8538 Lowell St, St. Louis MO 63147","St Louis City","SFH",37500,90000,30000,13000,11000,"Estimate","North city, cheap. Spread is thin."],
+["b3-03",3,"Near","Blaine Murphy","409-656-8663","blaine0435@gmail.com","2440 Corley Ave, Beaumont TX 77701","Jefferson Co.","SFH",49500,80000,30000,6000,5000,"Estimate","Priced 10% under Zillow. Thin spread in a low-value market."],
+["b3-12",3,"Near","Michelle Cantin","812-230-2897","mcantin6924@gmail.com","6924 N Rebecca Ct, Terre Haute IN 47805","Vigo Co.","SFH",80000,95000,20000,26500,23000,"Estimate","Priced 10% under Zillow. If the house is nicer than Zillow implies, ARV is higher."],
+["b3-15",3,"Near","Jeanice Williams","304-615-3562","jeanice.williams.090776@gmail.com","553 6th St, Parkersburg WV 26101","Wood Co.","Other (confirm type)",65000,75000,25000,7000,6000,"Estimate","Financial hardship. Confirm it is a house. Thin market and thin spread."],
+["b4-00",4,"Near","Elizabeth Bird-Chambos","810-569-6450","echambos@gmail.com","8052 Beecher Rd, Flushing MI 48433","Genesee Co.","SFH",137500,185000,30000,79500,69000,"Estimate","Financial hardship."],
+["b4-03",4,"Near","Mary Lynch-callahan","812-230-7176","giftmc1962@yahoo.com","2620 Harrison Ave, Terre Haute IN 47803","Vigo Co.","SFH",78000,90000,25000,18000,16000,"Estimate","Financial hardship. Low-value market, thin spread."],
+["b4-10",4,"Near","Judy Crawford","785-580-6293","froggranny55@gmail.com","2501 SE Maryland Ave, Topeka KS 66605","Shawnee Co.","SFH",50000,90000,25000,18000,16000,"Estimate","Priced 10% under Zillow. Thin spread."],
+["b4-12",4,"Near","John Doscher","330-685-5492","doschersoldit@yahoo.com","1001 15th St NE, Canton OH 44714","Stark Co.","SFH",65000,85000,25000,14500,12000,"Estimate","Priced 10% under Zillow. Thin spread."],
+["b4-14",4,"Near","Frank Roberts","913-485-7520","jazandreny@gmail.com","8401 Riley St, Overland Park KS 66212","Johnson Co.","SFH",190000,260000,40000,122000,106000,"Estimate","VERIFY size and type first. $190K is low for Overland Park. ARV is a conservative guess."],
+["b4-17",4,"Near","CA Moore","404-861-0407","humanracin@gmail.com","1324 Westmont Rd SW, Atlanta GA 30311","Fulton Co.","SFH",165000,220000,25000,109000,95000,"Estimate","Seller says it only lacks flooring (bare concrete floors). Confirm it is otherwise finished."],
+["b4-19",4,"Near","Antoinette Maxwell","681-344-2062","lebronmaxwell58@gmail.com","1114 Barton St, Charleston WV 25302","Kanawha Co.","SFH",50000,75000,25000,7500,6000,"Estimate","Thin market, very thin spread."],
+["b5-32",5,"Near","Mike Rita Vest","216-801-9134","rrobinson630@yahoo.com","12921 Matherson Ave, Cleveland OH 44135","Cuyahoga Co.","SFH",80000,100000,30000,27000,24000,"Estimate","Priced 10% under Zillow."],
+["b5-34",5,"Near","Erma Lanus","225-421-9710","ermalanus5@gmail.com","607 Charles Ave, Baker LA 70714","East Baton Rouge Parish","SFH",100000,130000,30000,41000,36000,"Estimate","Priced 10% under Zillow."],
+["b1-09",1,"Parked","Cheryl Baker","602-662-4901","Beadingboomer@yahoo.com","1970 W Tanner Ranch Rd, San Tan Valley AZ 85144","Pinal Co.","SFH",250000,340000,45000,173000,150000,"Comps","Comp: 2496 W Tanner Ranch sold $320K. Gap drops to about $47K if condition is light."],
+["b1-14",1,"Parked","James Stafford","859-230-3304","staffordj192@gmail.com","3708 Von Sneider Ct, Lexington KY 40517","Fayette Co.","SFH",300000,400000,22000,238000,207000,"Estimate","Ask was a $300-500K range (used $300K). Move-in ready. Get the real number."],
+["b1-02",1,"Parked","Lucy Riggie","716-435-8272","solidgoldlucy@icloud.com","422 Breckenridge St, Buffalo NY 14213","Erie Co.","2-family / row",165000,190000,40000,73000,63000,"Estimate","2-family with a 2-car garage. Ask about tenants and rents."],
+["b1-03",1,"Parked","Liz Honaker","406-254-7172","honakerlaw@aol.com","439 W Davilla St, Bartlett TX 76511","Bell Co.","SFH",165000,185000,36000,73500,64000,"Estimate","Small town, thinner buyer pool."],
+["b1-10",1,"Parked","Linda Moyer","251-504-7257","eded9173@gmail.com","1118 Sloane Cv, Foley AL 36535","Baldwin Co.","SFH",215000,250000,35000,120000,104000,"Estimate","Ask was entered as $215.00, read as $215K. Priced 10% under Zillow."],
+["b1-11",1,"Parked","Jeff Cecil","337-915-9706","zeph257@gmail.com","202 Saint Charles St, Carencro LA 70520","Lafayette Parish","SFH",150000,170000,34000,65000,56000,"Comps","Inherited. Confirm other heirs and probate status."],
+["b1-19",1,"Parked","Melinda Fontenette","337-455-1269","fontenettemelinda@hotmail.com","314 Begnaud Dr, Lafayette LA 70501","Lafayette Parish","SFH",170000,190000,38000,75000,65000,"Estimate","Priced 10% under Zillow."],
+["b2-05",2,"Parked","Mark Michalski","940-704-3825","mstump62@aol.com","2642 Key West Dr, Katy TX 77493","Harris Co.","SFH",null,320000,30000,174000,150000,"Estimate","No ask. Wants best offer before listing. Relocating. Get his number first."],
+["b2-07",2,"Parked","Jaime Youngblood","713-494-6736","Shofsmom@yahoo.com","3210 Falling Brook Dr, Kingwood TX 77345","Harris Co.","SFH",260000,310000,35000,162000,140000,"Estimate","Tired landlord. Ask about tenant, lease and rent."],
+["b2-10",2,"Parked","Paul Wisdom","972-270-4736","pgwisdom1@att.net","1314 Athens Dr, Mesquite TX 75149","Dallas Co.","SFH 3/1/1 brick",225000,250000,25000,130000,112000,"Estimate","New roof, newer gas and water line, special engineered foundation. Ask for the foundation paperwork."],
+["b2-15",2,"Parked","Brian Lee","504-975-0420","bolholdings@yahoo.com","11100 N Idlewood Ct, New Orleans LA 70128","Orleans Parish","SFH",170000,190000,30000,83000,72000,"Estimate","Priced 10% under Zillow. His email suggests he may be an investor."],
+["b2-16",2,"Parked","Ana Howard","801-529-3083","anahowardd06@gmail.com","141 Saxony Terrace C, Delray Beach FL 33446","Palm Beach Co.","Condo",95000,110000,15000,42000,36000,"Estimate","Condo: check HOA fees, assessments, rental limits and whether assignment is allowed. Relocating."],
+["b3-07",3,"Parked","Rickey Smith","234-228-5382","badboyboxer1031@gmail.com","1738 Parkman Rd NW, Warren OH 44485","Trumbull Co.","Townhouse / row",null,110000,10000,47000,41000,"Estimate","Ask 'negotiable'. Remodeled 4 years ago. Get his number and HOA details."],
+["b3-16",3,"Parked","Jacques Lerouge","678-808-9490","jacqueslerouge658@gmail.com","10617 Barberry Dr, Hampton GA 30228","Henry Co.","SFH",260000,300000,10000,180000,155000,"Estimate","Seller says everything is updated with a brand new roof, so margin is thin. Ask for receipts."],
+["b3-17",3,"Parked","Thomas Clegg","479-925-6369","tcarknight@yahoo.com","17 Cardinal Ct, Rogers AR 72756","Benton Co.","SFH",275000,320000,30000,174000,150000,"Estimate","Ask was $250-300K (used $275K). Financial hardship. Get mortgage balance."],
+["b4-07",4,"Parked","Sal Fernandes","210-853-9977","salferns@hotmail.com","7850 Hedrick Farm, San Antonio TX 78239","Bexar Co.","SFH",null,230000,30000,111000,96000,"Estimate","No ask ('fair market value'). Relocating."],
+["b4-08",4,"Parked","Gloria Bernal","219-424-7157","gloriabernal1212@gmail.com","1626 Minnesota St, Hobart IN 46342","Lake Co.","SFH",null,200000,30000,90000,78000,"Estimate","Ask typed 'Two thousand sixty five or best offer' (unclear, maybe $206.5K). Behind on payments."],
+["b4-09",4,"Parked","Darla Henson","317-385-8313","darlahenson@aol.com","1429 E 11th St, Indianapolis IN 46201","Marion Co.","SFH",null,130000,30000,41000,36000,"Estimate","No ask. Needs money to buy a smaller one-level house. Financial hardship."],
+["b4-16",4,"Parked","Barbara Moseley","864-554-3016","bam7204@yahoo.com","14264 Bryce Dr, Horizon City TX 79928","El Paso Co.","Other (confirm type)",198000,200000,15000,105000,90000,"Estimate","Roof and AC about 2 years old, many updates."],
+["b5-25",5,"Parked","Frederick Wilson","504-554-0397","frederickwilsontowingservice@yahoo.com","2000 Philip St, New Orleans LA 70113","Orleans Parish","SFH",215000,250000,40000,115000,100000,"Estimate","Ask typed '215', read as $215K."],
+["b5-30",5,"Parked","Patti Tourso","973-224-7260","patti.tourso2002@outlook.com","2249 E Manor Dr, Gilbert AZ 85296","Maricopa Co.","SFH",null,550000,40000,330000,285000,"Estimate","VERIFY THE ASK. Listed as '10k', which can't be right for Gilbert. Downsizing."],
+["b5-31",5,"Parked","Mike Hornbeck","304-483-2413","mikefalconfan1967@gmail.com","506 Dickens Dr, Mineral Wells WV 26150","Wood Co.","SFH",120000,130000,30000,41000,36000,"Estimate","Priced 10% under Zillow."],
+["b5-39",5,"Parked","Faith Hope","561-849-5038","faithhopelove65@yahoo.com","2443 NW 8th St, Pompano Beach FL 33069","Broward Co.","SFH",null,350000,35000,190000,165000,"Estimate","No ask and no details."]
+];
+const LEADS=RAW.map(r=>({id:r[0],batch:r[1],tier:r[2],name:r[3],phone:r[4],email:r[5],address:r[6],county:r[7],type:r[8],ask:r[9],arv:r[10],repairs:r[11],mc:r[12],offer:r[13],basis:r[14],notes:r[15]}));
+
+/* ---------- STATUSES ---------- */
+const STATUSES=[
+ ["new","Not called yet","#8b93a1"],
+ ["noans","Called, no answer","#f97316"],
+ ["vm","Voicemail left","#eab308"],
+ ["cb","Callback requested","#3b82f6"],
+ ["info","Info gathered","#6366f1"],
+ ["offer","Offer made","#a855f7"],
+ ["counter","Counter-offer","#ec4899"],
+ ["accepted","Offer accepted","#22c55e"],
+ ["sent","Contract sent","#14b8a6"],
+ ["signed","Contract signed","#15803d"],
+ ["assigned","Assigned to buyer","#ca8a04"],
+ ["dead","Dead / not interested","#dc2626"],
+ ["mls","On MLS / sold","#475569"]
+];
+const SMAP=Object.fromEntries(STATUSES.map(s=>[s[0],s]));
+const NEEDS_CALL=["new","noans","vm"];
+const TIER_ORDER={Close:0,Near:1,Parked:2};
+
+/* ---------- STATE ---------- */
+const KEY="kadar-lead-tracker-v1";
+let S=load();
+function load(){
+  try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.leads)return j}catch(e){}
+  return {team:["Hamza","Partner","Acquisitions Mgr"],me:"Hamza",fee:20000,pct:70,theme:"",leads:{}};
+}
+let saveTimer=null;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("Could not save in this browser")}}
+function L(id){ // per-lead state
+  if(!S.leads[id])S.leads[id]={status:"new",calls:0,owner:"",follow:"",notes:[],checks:{},arvOk:false,mlsOk:false,upd:0};
+  return S.leads[id];
+}
+function touch(id){L(id).upd=Date.now();save()}
+function eff(l){ // effective numbers
+  const s=L(l.id);
+  const ask=("ask" in s)?s.ask:l.ask;
+  const arv=("arv" in s)?s.arv:l.arv;
+  const repairs=("repairs" in s)?s.repairs:l.repairs;
+  const offer=("offer" in s)?s.offer:l.offer;
+  const tier=s.tier||l.tier;
+  let bm=("arv" in s||"repairs" in s)?Math.round(arv*S.pct/100-repairs):l.mc+20000;
+  const mc=bm-S.fee;
+  return {ask,arv,repairs,offer,tier,bm,mc,
+    gap:ask==null?null:ask-mc,
+    feeOffer:offer==null?null:bm-offer,
+    feeAsk:ask==null?null:bm-ask,
+    recalced:("arv" in s||"repairs" in s)};
+}
+
+/* ---------- HELPERS ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>n==null||isNaN(n)?"n/a":(n<0?"-":"")+"$"+Math.abs(Math.round(n)).toLocaleString("en-US");
+function feeClass(f){if(f==null)return "";return f>=S.fee?"fee-good":f>=0?"fee-warn":"fee-bad"}
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1800)}
+function ago(ts){if(!ts)return "never";const m=Math.round((Date.now()-ts)/60000);if(m<1)return "just now";if(m<60)return m+" min ago";const h=Math.round(m/60);if(h<24)return h+" h ago";return Math.round(h/24)+" d ago"}
+function today(){return new Date().toISOString().slice(0,10)}
+
+/* ---------- FILTER STATE (UI only) ---------- */
+let view="cards",fStatus="",openId=null;
+
+function filtered(){
+  const q=$("#q").value.trim().toLowerCase(),t=$("#fTier").value,o=$("#fOwner").value;
+  let a=LEADS.filter(l=>{
+    const s=L(l.id),e=eff(l);
+    if(t&&e.tier!==t)return false;
+    if(o==="__none"){if(s.owner)return false}else if(o&&s.owner!==o)return false;
+    if(fStatus==="__call"){if(!NEEDS_CALL.includes(s.status))return false}
+    else if(fStatus==="__follow"){if(!s.follow||s.follow>today())return false}
+    else if(fStatus&&s.status!==fStatus)return false;
+    if(q){const hay=[l.name,l.address,l.phone,l.county,l.email,l.notes,(s.notes||[]).map(n=>n.text).join(" ")].join(" ").toLowerCase();if(!hay.includes(q))return false}
+    return true;
+  });
+  const key=$("#sort").value;
+  a.sort((x,y)=>{
+    const ex=eff(x),ey=eff(y);
+    if(key==="fee")return (ey.feeOffer??-1e12)-(ex.feeOffer??-1e12);
+    if(key==="ask")return (ex.ask??1e12)-(ey.ask??1e12);
+    if(key==="recent")return (L(y.id).upd||0)-(L(x.id).upd||0);
+    if(key==="followup")return (L(x.id).follow||"9999")<(L(y.id).follow||"9999")?-1:1;
+    if(key==="name")return x.name.localeCompare(y.name);
+    const d=TIER_ORDER[ex.tier]-TIER_ORDER[ey.tier];if(d)return d;
+    return (ex.gap??1e12)-(ey.gap??1e12);
+  });
+  return a;
+}
+
+/* ---------- RENDER ---------- */
+function renderStats(){
+  const total=LEADS.length;
+  const c=k=>LEADS.filter(l=>L(l.id).status===k).length;
+  const touched=LEADS.filter(l=>L(l.id).status!=="new").length;
+  const calls=LEADS.reduce((a,l)=>a+(L(l.id).calls||0),0);
+  const live=LEADS.filter(l=>["accepted","sent","signed","assigned"].includes(L(l.id).status));
+  const pipe=live.reduce((a,l)=>{const e=eff(l);return a+(e.feeOffer??S.fee)},0);
+  const items=[
+    [total,"Leads in list",""],
+    [Math.round(touched/total*100)+"%","Worked so far","<div class='progress'><i style='width:"+(touched/total*100)+"%'></i></div>"],
+    [c("new"),"Not called yet",""],
+    [c("noans")+c("vm"),"No answer / voicemail",""],
+    [c("cb")+c("info"),"Callback or info gathered",""],
+    [c("offer")+c("counter"),"Offers out",""],
+    [c("accepted")+c("sent")+c("signed"),"Accepted to signed",""],
+    [money(pipe),"Projected fees (accepted+)",""],
+    [calls,"Call attempts logged",""]
+  ];
+  $("#stats").innerHTML=items.map(i=>`<div class="stat"><b>${i[0]}</b><span>${i[1]}</span>${i[2]}</div>`).join("");
+}
+function renderChips(){
+  const base=LEADS;
+  const defs=[["","All",base.length],["__call","Needs a call",base.filter(l=>NEEDS_CALL.includes(L(l.id).status)).length],["__follow","Follow-up due",base.filter(l=>{const f=L(l.id).follow;return f&&f<=today()}).length]]
+   .concat(STATUSES.map(s=>[s[0],s[1],base.filter(l=>L(l.id).status===s[0]).length]));
+  $("#chips").innerHTML=defs.map(d=>`<button class="chip ${fStatus===d[0]?"on":""}" data-s="${d[0]}">${esc(d[1])}<span class="n">${d[2]}</span></button>`).join("");
+  $("#chips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{fStatus=b.dataset.s;render()});
+  $("#legend").innerHTML=STATUSES.map(s=>`<span><i style="background:${s[2]}"></i>${esc(s[1])}</span>`).join("")+`<span class="meta">Fee color: green meets target, amber is under target, red is a loss.</span>`;
+}
+function statusSelect(id,small){
+  const s=L(id),c=SMAP[s.status][2];
+  return `<select class="sel-status" data-id="${id}" style="--sc:${c}">${STATUSES.map(x=>`<option value="${x[0]}" ${s.status===x[0]?"selected":""}>${esc(x[1])}</option>`).join("")}</select>`;
+}
+function cardHTML(l){
+  const s=L(l.id),e=eff(l),sc=SMAP[s.status][2];
+  const verified=s.arvOk?`<span class="basis ok">ARV verified</span>`:`<span class="basis">ARV: ${esc(l.basis)}${e.recalced?" (edited)":""}</span>`;
+  const followTag=s.follow?`<span class="meta">Follow up ${esc(s.follow)}</span>`:"";
+  return `<div class="card" style="--sc:${sc}" data-id="${l.id}">
+   <div class="row between">
+     <div class="row"><span class="tag t-${e.tier}">${e.tier}</span>${verified}${s.mlsOk?`<span class="basis ok">MLS checked</span>`:""}</div>
+     <span class="meta">Batch ${l.batch}</span>
+   </div>
+   <div><h3>${esc(l.name)}</h3>
+     <div class="addr"><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/${encodeURIComponent(l.address)}">${esc(l.address)}</a> · ${esc(l.county)} · ${esc(l.type)}</div>
+   </div>
+   <div class="metrics">
+     <div class="m"><small>Asking</small><b>${e.ask==null?"No ask":money(e.ask)}</b></div>
+     <div class="m"><small>ARV</small><b>${money(e.arv)}</b></div>
+     <div class="m"><small>Max allowable (MAO)</small><b>${money(e.mc)}</b></div>
+     <div class="m"><small>Initial offer</small><b>${e.offer==null?"n/a":money(e.offer)}</b></div>
+     <div class="m"><small>Fee at our offer</small><b class="${feeClass(e.feeOffer)}">${money(e.feeOffer)}</b></div>
+     <div class="m"><small>Gap (ask - MAO)</small><b>${e.gap==null?"n/a":money(e.gap)}</b></div>
+   </div>
+   <div class="row between">
+     ${statusSelect(l.id)}
+     <span class="meta">${s.calls||0} call${s.calls==1?"":"s"} · ${s.owner?esc(s.owner):"unassigned"} · ${ago(s.upd)}</span>
+   </div>
+   <div class="row">
+     <a class="btn sm primary" href="tel:${l.phone.replace(/\D/g,"")}">Call ${esc(l.phone)}</a>
+     <button class="btn sm" data-act="attempt" data-id="${l.id}">+ Log call attempt</button>
+     <button class="btn sm" data-act="copy" data-id="${l.id}">Copy info text</button>
+     <button class="btn sm" data-act="open" data-id="${l.id}">Open details</button>
+     ${followTag}
+   </div>
+  </div>`;
+}
+function boardHTML(list){
+  return `<div class="board">`+STATUSES.map(st=>{
+    const items=list.filter(l=>L(l.id).status===st[0]);
+    return `<div class="col" style="--sc:${st[2]}"><h4><span><i></i>${esc(st[1])}</span><span class="meta">${items.length}</span></h4>`+
+      items.map(l=>{const e=eff(l);return `<div class="mini" style="--sc:${st[2]}" data-open="${l.id}"><b>${esc(l.name)}</b><span>${esc(l.address.split(",").slice(-2).join(",").trim())}</span><br><span>${e.tier} · ask ${e.ask==null?"n/a":money(e.ask)} · fee <span class="${feeClass(e.feeOffer)}">${money(e.feeOffer)}</span></span></div>`}).join("")+
+      `</div>`;
+  }).join("")+`</div>`;
+}
+function renderView(){
+  const list=filtered();
+  const v=$("#view");
+  if(!list.length){v.innerHTML=`<div class="empty">No leads match these filters.</div>`;return}
+  if(view==="board"){v.innerHTML=boardHTML(list);v.querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>openDrawer(el.dataset.open));return}
+  v.innerHTML=`<div class="grid">`+list.map(cardHTML).join("")+`</div>`;
+  v.querySelectorAll(".sel-status").forEach(sel=>sel.onchange=ev=>{setStatus(sel.dataset.id,sel.value)});
+  v.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.id,a=b.dataset.act;
+    if(a==="attempt")logAttempt(id);
+    if(a==="copy")copyInfo(id);
+    if(a==="open")openDrawer(id);
+  });
+}
+function render(){renderStats();renderChips();renderView();if(openId)drawerRefreshCalc()}
+
+/* ---------- ACTIONS ---------- */
+function addNote(id,text,auto){
+  const s=L(id);s.notes=s.notes||[];
+  s.notes.unshift({t:Date.now(),by:S.me,text,auto:!!auto});
+}
+function setStatus(id,val){
+  const s=L(id),old=s.status;if(old===val)return;
+  s.status=val;
+  addNote(id,`Status: ${SMAP[old][1]} -> ${SMAP[val][1]}`,true);
+  if(val==="noans"||val==="vm"){s.calls=(s.calls||0)+1}
+  touch(id);render();if(openId===id)openDrawer(id);
+}
+function logAttempt(id){
+  const s=L(id);s.calls=(s.calls||0)+1;
+  if(s.status==="new")s.status="noans";
+  addNote(id,`Call attempt #${s.calls}`,true);
+  touch(id);render();toast("Call attempt logged");
+}
+function infoText(l){
+  const e=eff(l);
+  return `LEAD: ${l.name}\n${l.address}\nPh: ${l.phone}\nAsk: ${e.ask==null?"none given":money(e.ask)} | ${l.notes}\nOur offer (after questions): ${e.offer==null?"n/a":money(e.offer)} | Walk away above ${money(e.mc)}\nAsk: condition (roof, HVAC, water heater, plumbing, electrical, foundation, water damage), occupied/vacant, photos/video, why selling + timeline, liens/back taxes, their lowest number.\nNo offer on call 1. Ask, call back with the offer, go lower if heavy work.`;
+}
+function copyInfo(id){
+  const l=LEADS.find(x=>x.id===id),t=infoText(l);
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Info text copied")).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Info text copied")}catch(e){toast("Copy failed")}ta.remove();
+  });
+}
+
+/* ---------- DRAWER ---------- */
+function drawerCalcHTML(l){
+  const e=eff(l);
+  return `<div class="calc">
+    <div><span>ARV x ${S.pct}% - repairs = buyer's max</span><b>${money(e.bm)}</b></div>
+    <div><span>Minus our fee target (${money(S.fee)}) = MAO</span><b>${money(e.mc)}</b></div>
+    <div><span>Fee if we get it at our initial offer</span><b class="${feeClass(e.feeOffer)}">${money(e.feeOffer)}</b></div>
+    <div><span>Fee if we pay the full ask</span><b class="${feeClass(e.feeAsk)}">${money(e.feeAsk)}</b></div>
+    <div><span>Gap (ask - MAO)</span><b>${e.gap==null?"n/a":money(e.gap)}</b></div>
+    ${e.recalced?"":`<div class="meta"><span>Using the original screening numbers. Edit ARV or repairs to recalculate.</span></div>`}
+  </div>`;
+}
+function drawerRefreshCalc(){const l=LEADS.find(x=>x.id===openId);const el=$("#calc");if(l&&el)el.innerHTML=drawerCalcHTML(l)}
+function numVal(v){const n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return isNaN(n)?null:n}
+function openDrawer(id){
+  openId=id;
+  const l=LEADS.find(x=>x.id===id),s=L(id),e=eff(l);
+  const checks=[["condition","Condition (roof, HVAC, plumbing, foundation)"],["occupancy","Occupancy and tenants"],["photos","Photos / video received"],["liens","Liens, taxes, mortgage"],["motivation","Motivation and timeline"],["theirnum","Their lowest number"]];
+  $("#drawer").innerHTML=`
+   <div class="row between"><div><span class="tag t-${e.tier}">${e.tier}</span> <span class="meta">Batch ${l.batch} · ${esc(l.type)} · ${esc(l.county)}</span></div><button class="btn sm" id="dx">Close</button></div>
+   <h2>${esc(l.name)}</h2>
+   <div class="addr"><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/${encodeURIComponent(l.address)}">${esc(l.address)}</a> ·
+     <a target="_blank" rel="noopener" href="https://www.zillow.com/homes/${encodeURIComponent(l.address)}_rb/">Zillow</a> ·
+     <a target="_blank" rel="noopener" href="https://www.redfin.com/search?q=${encodeURIComponent(l.address)}">Redfin</a></div>
+   <div class="row" style="margin-top:10px">
+     <a class="btn primary" href="tel:${l.phone.replace(/\D/g,"")}">Call ${esc(l.phone)}</a>
+     <a class="btn" href="mailto:${esc(l.email)}">Email</a>
+     <button class="btn" id="dAttempt">+ Log call attempt (${s.calls||0})</button>
+     <button class="btn" id="dCopy">Copy info text</button>
+   </div>
+   <div class="note" style="margin-top:12px">${esc(l.notes)}</div>
+   <div class="f">
+     <div><label>Status</label>${statusSelect(id)}</div>
+     <div><label>Assigned to</label><select id="dOwner"><option value="">Unassigned</option>${S.team.map(t=>`<option ${s.owner===t?"selected":""}>${esc(t)}</option>`).join("")}</select></div>
+     <div><label>Follow-up date</label><input id="dFollow" type="date" value="${esc(s.follow||"")}"></div>
+     <div><label>Tier</label><select id="dTier">${["Close","Near","Parked"].map(t=>`<option ${e.tier===t?"selected":""}>${t}</option>`).join("")}</select></div>
+   </div>
+   <div class="sec"><h5>Numbers (edit to recalculate)</h5>
+     <div class="f">
+       <div><label>Asking price</label><input id="dAsk" type="text" inputmode="numeric" value="${e.ask==null?"":e.ask}" placeholder="No ask"></div>
+       <div><label>ARV (${esc(l.basis)}${s.arvOk?", verified":""})</label><input id="dArv" type="text" inputmode="numeric" value="${e.arv}"></div>
+       <div><label>Repair estimate</label><input id="dRep" type="text" inputmode="numeric" value="${e.repairs}"></div>
+       <div><label>Our initial offer</label><input id="dOffer" type="text" inputmode="numeric" value="${e.offer==null?"":e.offer}"></div>
+     </div>
+     <div id="calc">${drawerCalcHTML(l)}</div>
+     <div class="checks" style="margin-top:10px">
+       <label><input type="checkbox" id="dArvOk" ${s.arvOk?"checked":""}> ARV verified with sold comps</label>
+       <label><input type="checkbox" id="dMlsOk" ${s.mlsOk?"checked":""}> Checked: not on MLS, not sold</label>
+     </div>
+   </div>
+   <div class="sec"><h5>Questions to ask the seller</h5>
+     <div class="checks">${checks.map(c=>`<label><input type="checkbox" data-ck="${c[0]}" ${s.checks&&s.checks[c[0]]?"checked":""}> ${esc(c[1])}</label>`).join("")}</div>
+   </div>
+   <div class="sec"><h5>Notes and activity</h5>
+     <textarea id="dNote" rows="3" placeholder="What did they say? Their number, condition, timeline..."></textarea>
+     <div class="row" style="margin-top:6px"><button class="btn primary sm" id="dAddNote">Add note as ${esc(S.me)}</button></div>
+     <div class="log">${(s.notes||[]).map(n=>`<div><small>${esc(n.by)} · ${new Date(n.t).toLocaleString()}</small>${esc(n.text)}</div>`).join("")||`<span class="meta">No notes yet.</span>`}</div>
+   </div>
+   <div class="meta">Email: ${esc(l.email)}</div>`;
+  $("#ov").classList.add("on");
+  const d=$("#drawer");
+  d.querySelector("#dx").onclick=closeDrawer;
+  d.querySelector(".sel-status").onchange=ev=>setStatus(id,ev.target.value);
+  d.querySelector("#dAttempt").onclick=()=>{logAttempt(id);openDrawer(id)};
+  d.querySelector("#dCopy").onclick=()=>copyInfo(id);
+  d.querySelector("#dOwner").onchange=ev=>{s.owner=ev.target.value;addNote(id,`Assigned to ${s.owner||"nobody"}`,true);touch(id);render();openDrawer(id)};
+  d.querySelector("#dFollow").onchange=ev=>{s.follow=ev.target.value;touch(id);render()};
+  d.querySelector("#dTier").onchange=ev=>{s.tier=ev.target.value;touch(id);render();openDrawer(id)};
+  const num=(sel,key)=>d.querySelector(sel).oninput=ev=>{const v=numVal(ev.target.value);if(v==null&&key!=="ask"&&key!=="offer")return;s[key]=v;touch(id);render();drawerRefreshCalc()};
+  num("#dAsk","ask");num("#dArv","arv");num("#dRep","repairs");num("#dOffer","offer");
+  d.querySelector("#dArvOk").onchange=ev=>{s.arvOk=ev.target.checked;touch(id);render()};
+  d.querySelector("#dMlsOk").onchange=ev=>{s.mlsOk=ev.target.checked;touch(id);render()};
+  d.querySelectorAll("[data-ck]").forEach(c=>c.onchange=()=>{s.checks=s.checks||{};s.checks[c.dataset.ck]=c.checked;touch(id)});
+  d.querySelector("#dAddNote").onclick=()=>{const t=$("#dNote").value.trim();if(!t)return;addNote(id,t);touch(id);render();openDrawer(id)};
+}
+function closeDrawer(){openId=null;$("#ov").classList.remove("on")}
+$("#ov").addEventListener("click",e=>{if(e.target.id==="ov")closeDrawer()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
+
+/* ---------- HEADER CONTROLS ---------- */
+function fillTeam(){
+  $("#me").innerHTML=S.team.map(t=>`<option ${S.me===t?"selected":""}>${esc(t)}</option>`).join("");
+  const cur=$("#fOwner").value;
+  $("#fOwner").innerHTML=`<option value="">Everyone</option><option value="__none">Unassigned</option>`+S.team.map(t=>`<option>${esc(t)}</option>`).join("");
+  $("#fOwner").value=cur||"";
+}
+$("#me").onchange=e=>{S.me=e.target.value;save()};
+$("#feeTarget").value=S.fee;$("#buyerPct").value=S.pct;
+$("#feeTarget").oninput=e=>{const v=numVal(e.target.value);if(v!=null&&v>=0){S.fee=v;save();render()}};
+$("#buyerPct").oninput=e=>{const v=numVal(e.target.value);if(v!=null&&v>=50&&v<=85){S.pct=v;save();render()}};
+$("#btnTheme").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");S.theme=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=S.theme;save()};
+$("#btnTeam").onclick=()=>{
+  const v=prompt("Team names, separated by commas",S.team.join(", "));
+  if(v==null)return;
+  const t=v.split(",").map(x=>x.trim()).filter(Boolean);
+  if(!t.length)return;
+  S.team=t;if(!t.includes(S.me))S.me=t[0];save();fillTeam();render();
+};
+$("#btnExport").onclick=()=>{
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kadar-leads-"+today()+".json";a.click();
+  toast("Exported. Send this file to your team to merge.");
+};
+$("#btnImport").onclick=()=>$("#file").click();
+$("#file").onchange=ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const j=JSON.parse(r.result);if(!j.leads)throw 0;
+      let n=0;
+      Object.keys(j.leads).forEach(id=>{
+        const mine=S.leads[id],theirs=j.leads[id];
+        if(!mine||(theirs.upd||0)>(mine.upd||0)){S.leads[id]=theirs;n++}
+      });
+      (j.team||[]).forEach(t=>{if(!S.team.includes(t))S.team.push(t)});
+      save();fillTeam();render();toast("Merged. "+n+" lead(s) updated from the file.");
+    }catch(e){toast("That file isn't a tracker export")}
+  };
+  r.readAsText(f);ev.target.value="";
+};
+$("#btnCsv").onclick=()=>{
+  const cols=["Tier","Name","Phone","Email","Address","County","Type","Status","Assigned","Calls","Follow-up","Ask","ARV","Repairs","MAO","Initial offer","Fee at offer","Gap","ARV basis","ARV verified","Notes"];
+  const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const rows=LEADS.map(l=>{const s=L(l.id),e=eff(l);return [e.tier,l.name,l.phone,l.email,l.address,l.county,l.type,SMAP[s.status][1],s.owner,s.calls||0,s.follow,e.ask,e.arv,e.repairs,e.mc,e.offer,e.feeOffer,e.gap,l.basis,s.arvOk?"yes":"no",(s.notes||[]).filter(n=>!n.auto).map(n=>n.by+": "+n.text).join(" | ")].map(q).join(",")});
+  const blob=new Blob([cols.map(q).join(",")+"\n"+rows.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kadar-leads-"+today()+".csv";a.click();
+};
+["#q","#fTier","#fOwner","#sort"].forEach(s=>$(s).addEventListener("input",renderView));
+$("#vCards").onclick=()=>{view="cards";$("#vCards").classList.add("on");$("#vBoard").classList.remove("on");renderView()};
+$("#vBoard").onclick=()=>{view="board";$("#vBoard").classList.add("on");$("#vCards").classList.remove("on");renderView()};
+if(S.theme)document.documentElement.dataset.theme=S.theme;
+fillTeam();render();
+</script>
+</body>
+</html>
